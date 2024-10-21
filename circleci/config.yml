@@ -7,14 +7,17 @@ jobs:
     working_directory: ~/repo
 
     steps:
-      # Step 1: Obtenemos el código fuente
+      # Paso 1: Limpiamos el entorno virtual y el caché
+      - run:
+          name: Remove existing venv and clear pip cache
+          command: |
+            rm -rf venv
+            pip cache purge
+
+      # Paso 2: Obtenemos el código fuente
       - checkout
 
-      # Step 2: Limpiamos el entorno virtual y creamos uno nuevo
-      - run:
-          name: Remove existing venv
-          command: rm -rf venv
-
+      # Paso 3: Creamos y activamos el entorno virtual, instalamos dependencias
       - run:
           name: Create and activate venv, install dependencies
           command: |
@@ -23,28 +26,17 @@ jobs:
             pip install --upgrade pip
             pip install -r requirements.txt
 
-      # Step 3: Actualizamos pytest y py para evitar problemas de compatibilidad
+      # Paso 4: Aseguramos la última versión de pytest y py
       - run:
           name: Install latest pytest and py
           command: |
             source venv/bin/activate
             pip install --upgrade pytest py
 
-      # Step 4: Ejecutamos linters y pruebas
+      # Paso 5: Ejecutamos linters y pruebas
       - run:
           name: Run flake8 and pytest
           command: |
             source venv/bin/activate
             flake8 --exclude=venv* --statistics
             pytest -v
-
-      # Step 5: Docker build and push (opcional, descomenta si es necesario)
-#      - setup_remote_docker:
-#          docker_layer_caching: true
-#      - run:
-#          name: Build and Push Docker
-#          command: |
-#            source venv/bin/activate
-#            docker build -t poc/$IMAGE_NAME:$TAG .
-#            echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin
-#            docker push ideaslocas/$IMAGE_NAME:$TAG
